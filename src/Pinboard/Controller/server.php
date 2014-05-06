@@ -930,6 +930,27 @@ function generateOrderBy($colOrder, $colDir, $table) {
             $orderBy = 'mem_peak_usage ' . $dir . ', created_at DESC';
         } elseif ('ipm_cpu_usage_details' == $table && 'cpu' == $colOrder) {
             $orderBy = 'cpu_peak_usage ' . $dir . ', created_at DESC';
+        } elseif (strpos($table, 'tag_report_') !== false) {
+            switch ($colOrder) {
+                case 'host' :
+                    $orderBy = 'hostname ' . $dir . ', timer_value DESC';
+                    break;
+                case 'script' :
+                    $orderBy = 'script_name ' . $dir . ', timer_value DESC';
+                    break;
+                case 'tag_value' :
+                case 'req_count' :
+                case 'req_per_sec' :
+                case 'hit_count' :
+                case 'hit_per_sec' :
+                case 'timer_median' :
+                case 'index_value' :
+                    $orderBy = $colOrder . ' ' . $dir . ', timer_value DESC';
+                    break;
+                default:
+                    $orderBy = 'timer_value ' . $dir;
+                    break;
+            }
         } else {
             switch ($colOrder) {
                 case 'host':
@@ -946,6 +967,110 @@ function generateOrderBy($colOrder, $colDir, $table) {
     }
 
     return $orderBy;
+}
+
+if (!empty($app['params']['timers']['enable']) && $app['params']['timers']['enable']) {
+    $server->get('/{serverName}/{hostName}/timers/{colOrder}/{colDir}', function(Request $request, $serverName, $hostName, $colOrder, $colDir) use ($app) {
+        Utils::checkUserAccess($app, $serverName);
+
+        if ($request->isXmlHttpRequest()) {
+            $result = array(
+                'timers' => getTimersOverview($app['db'], $serverName, $hostName, $result['limit'], $colOrder, $colDir)
+            );
+
+            return $app->json($result);
+        }
+
+        $result = array(
+            'server_name' => $serverName,
+            'hostname'    => $hostName,
+            'title'       => 'Timers overview / ' . $serverName,
+            'limit'       => 75,
+            'colOrder'    => $colOrder,
+            'colDir'      => $colDir
+        );
+        $result['timerList'] = getTagList($app['db']);
+        $result['hosts'] = getHosts($app['db'], $serverName);
+        foreach($result['timerList'] AS $timer) {
+            try {
+                $result['overview'][$timer['id']] = getTimersOverview(
+                    $app['db'],
+                    $serverName,
+                    $hostName,
+                    $timer['name'],
+                    $result['limit'],
+                    $colOrder,
+                    $colDir
+                );
+            } catch (Exception $e) {
+                $result['overview'][$timer['id']] = array();
+            }
+        }
+        return $app['twig']->render(
+            'timers.html.twig',
+            $result
+        );
+    })
+    ->value('hostName', 'all')
+    ->value('colOrder', null)
+    ->value('colDir', null)
+    ->bind('server_timers');
+}
+function getTimersOverview($conn, $serverName, $hostName, $groupName, $limit = 50, $colOrder, $colDir) {
+    $params = array(
+        'server_name' => $serverName
+    );
+
+    $hostCondition = '';
+
+    if ($hostName != 'all') {
+        $params['hostname'] = $hostName;
+        $hostCondition = 'AND hostname = :hostname';
+    }
+
+    $orderBy = 'timer_value DESC';
+    if (null !== $colOrder) {
+        $orderBy = generateOrderBy($colOrder, $colDir, 'tag_report_' . $groupName);
+    }
+
+    $sql = '
+        SELECT
+            *
+        FROM
+            tag_report_' . $groupName . '
+        WHERE
+            server_name = :server_name
+            ' . $hostCondition . '
+        ORDER BY
+            ' . $orderBy . '
+        LIMIT
+            ' . $limit . '
+    ';
+    $data = $conn->fetchAll($sql, $params);
+
+    foreach($data as &$item) {
+        $item['req_per_sec']    = number_format($item['req_per_sec'], 0, '.', ',');
+        $item['hit_per_sec']    = number_format($item['hit_per_sec'], 0, '.', ',');
+        $item['req_per_sec']    = number_format($item['req_per_sec'], 0, '.', ',');
+    }
+
+    return $data;
+}
+
+function getTagList($conn) {
+
+    $sql = '
+        SELECT
+            id, name
+        FROM
+            tag
+        ORDER BY
+            id ASC
+    ';
+
+    $data = $conn->fetchAll($sql);
+
+    return $data;
 }
 
 return $server;

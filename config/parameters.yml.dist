@@ -30,6 +30,10 @@ aggregation_period: PT15M
 pagination:
     row_per_page: 50
 
+# timers page for reports: https://github.com/tony2001/pinba_engine/wiki/Reports#tag_report_with_grouping_by_script_name_tag_value_hostname_and_server_name
+timers:
+    enable: false
+
 secure:
     enable: false
 #    users:

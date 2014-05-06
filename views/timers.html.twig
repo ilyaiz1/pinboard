@@ -1,0 +1,74 @@
+{% extends "base.html.twig" %}
+
+{% block title %}{{ title }} — {{ parent() }}{% endblock %}
+{% block content %}
+    {% include '_server_menu.html.twig' with { title: title, server_name: server_name, hostname: hostname, hosts: hosts } %}
+    <div class="row">
+      <div class="span12">
+        <table class="table table-bordered table-hover table-striped">
+          <tr>
+            <th class="hostname">Host name
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'host', colDir: 'asc' }) }}"><i class=" icon-chevron-up"></i></a>
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'host', colDir: 'desc' }) }}"><i class=" icon-chevron-down"></i></a>
+            </th>
+            <th>Script name
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'script', colDir: 'asc' }) }}"><i class=" icon-chevron-up"></i></a>
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'script', colDir: 'desc' }) }}"><i class=" icon-chevron-down"></i></a>
+            </th>
+            <th class="tag-value">Tag value
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'tag_value', colDir: 'asc' }) }}"><i class=" icon-chevron-up"></i></a>
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'tag_value', colDir: 'desc' }) }}"><i class=" icon-chevron-down"></i></a>
+            </th>
+            <th class="req-count">Reqs count
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'req_count', colDir: 'asc' }) }}"><i class=" icon-chevron-up"></i></a>
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'req_count', colDir: 'desc' }) }}"><i class=" icon-chevron-down"></i></a>
+            </th>
+            <th class="req-per-sec">RPS
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'req_per_sec', colDir: 'asc' }) }}"><i class=" icon-chevron-up"></i></a>
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'req_per_sec', colDir: 'desc' }) }}"><i class=" icon-chevron-down"></i></a>
+            </th>
+            <th class="hit-count">Hits count
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'hit_count', colDir: 'asc' }) }}"><i class=" icon-chevron-up"></i></a>
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'hit_count', colDir: 'desc' }) }}"><i class=" icon-chevron-down"></i></a>
+            </th>
+            <th class="hit-per-sec">HPS
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'hit_per_sec', colDir: 'asc' }) }}"><i class=" icon-chevron-up"></i></a>
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'hit_per_sec', colDir: 'desc' }) }}"><i class=" icon-chevron-down"></i></a>
+            </th>
+            <th class="timer-value">Timer
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'timer_value', colDir: 'asc' }) }}"><i class=" icon-chevron-up"></i></a>
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'timer_value', colDir: 'desc' }) }}"><i class=" icon-chevron-down"></i></a>
+            </th>
+            <th class="timer-median">Timer median
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'timer_median', colDir: 'asc' }) }}"><i class=" icon-chevron-up"></i></a>
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'timer_median', colDir: 'desc' }) }}"><i class=" icon-chevron-down"></i></a>
+            </th>
+            <th class="index-value">Index
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'index_value', colDir: 'asc' }) }}"><i class=" icon-chevron-up"></i></a>
+              <a href="{{ path('server_timers', { serverName: server_name, hostName: hostname, colOrder: 'index_value', colDir: 'desc' }) }}"><i class=" icon-chevron-down"></i></a>
+            </th>
+          </tr>
+            {% for timer in timerList %}
+              <tr>
+                <td colspan="10"><p class="lead">{{ timer.name }} stat for a last day</p></td>
+              </tr>
+              {% for page in attribute(overview, timer.id) %}
+              <tr class="{{ page.timer_value/page.req_count >= 5 ? 'error' : (page.timer_value/page.req_count >= 1 ? 'warning' : '') }}">
+                <td>{{ page.hostname }}</a></td>
+                <td><a href="http://{{ page.server_name ~ page.script_name }}" title="">{{ page.script_name | slice(0, 20) }}</a></td>
+                <td>{{ page.tag_value }}</td>
+                <td>{{ page.req_count }}</td>
+                <td>{{ page.req_per_sec }}</td>
+                <td>{{ page.hit_count }}</td>
+                <td>{{ page.hit_per_sec }}</td>
+                <td>{{ page.timer_value }}</td>
+                <td>{{ page.timer_median }}</td>
+                <td>{{ page.index_value }}</td>
+              </tr>
+              {% endfor %}
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+{% endblock %}
+
