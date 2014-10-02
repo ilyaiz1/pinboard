@@ -1,6 +1,13 @@
 <?php
 
-require_once __DIR__.'/../vendor/autoload.php';
+/**
+ * Pinboard may be included as a composer package
+ * so autoload.php might be already included, and
+ * locate in other place
+*/
+if (is_file(__DIR__.'/../vendor/autoload.php')) {
+    require_once __DIR__.'/../vendor/autoload.php';
+}
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
